@@ -7,6 +7,7 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,8 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.jeanlima.springrestapiapp.model.Cliente;
+import com.jeanlima.springrestapiapp.model.Pedido;
 import com.jeanlima.springrestapiapp.repository.ClienteRepository;
+import com.jeanlima.springrestapiapp.repository.PedidoRepository;
+import com.jeanlima.springrestapiapp.rest.dto.InformacaoItemPedidoDTO;
+import com.jeanlima.springrestapiapp.rest.dto.InformacoesPedidoDTO;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @RequestMapping("/api/clientes")
@@ -27,6 +35,33 @@ public class ClienteController {
 
     @Autowired
     private ClienteRepository clientes;
+
+    @Autowired
+    private PedidoRepository pedidoRepository;
+
+    // Atualização de campos específicos do cliente (PATCH):
+    @PatchMapping("{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updatePartial(@PathVariable Integer id, @RequestBody Map<String, Object> objectForUpdate) 
+    {
+        System.out.println("atualizando corretamente...");
+        Cliente cliente = clientes.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
+
+        objectForUpdate.forEach((key, value) -> {
+            switch (key) {
+                case "nome":
+                    cliente.setNome((String) value);
+                    break;
+                case "cpf":
+                    cliente.setCpf((String) value);
+                    break;
+                default:
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Campo " + key + " não suportado");
+            }
+        });
+        clientes.save(cliente);
+    }
 
     @GetMapping("{id}")
     public Cliente getClienteById( @PathVariable Integer id ){

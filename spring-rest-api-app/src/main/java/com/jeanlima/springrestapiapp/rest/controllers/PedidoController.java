@@ -1,7 +1,6 @@
 
 package com.jeanlima.springrestapiapp.rest.controllers;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,18 +22,34 @@ import org.springframework.web.server.ResponseStatusException;
 import com.jeanlima.springrestapiapp.enums.StatusPedido;
 import com.jeanlima.springrestapiapp.model.ItemPedido;
 import com.jeanlima.springrestapiapp.model.Pedido;
+
+
 import com.jeanlima.springrestapiapp.rest.dto.AtualizacaoStatusPedidoDTO;
 import com.jeanlima.springrestapiapp.rest.dto.InformacaoItemPedidoDTO;
 import com.jeanlima.springrestapiapp.rest.dto.InformacoesPedidoDTO;
 import com.jeanlima.springrestapiapp.rest.dto.PedidoDTO;
+import com.jeanlima.springrestapiapp.service.ItemPedidoService;
 import com.jeanlima.springrestapiapp.service.PedidoService;
-
+// import com.jeanlima.springrestapiapp.repository.ClienteRepository;
+// import com.jeanlima.springrestapiapp.repository.PedidoRepository;
+// import com.jeanlima.springrestapiapp.rest.dto.ItemPedidoDTO;
+// import com.jeanlima.springrestapiapp.model.Cliente;
 @RestController
 @RequestMapping("/api/pedidos")
 public class PedidoController {
 
     @Autowired
     private PedidoService service;
+
+    @Autowired
+    private ItemPedidoService itemPedidoService;
+    
+    //@Autowired
+    //private PedidoService pedidoService;
+    //@Autowired
+    //private ClienteRepository clientes;
+    //@Autowired
+    //private PedidoRepository pedidoRepository;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -55,11 +71,11 @@ public class PedidoController {
         return InformacoesPedidoDTO
                 .builder()
                 .codigo(pedido.getId())
-                .dataPedido(pedido.getDataPedido().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .dataPedido(pedido.getDataPedido())
                 .cpf(pedido.getCliente().getCpf())
                 .nomeCliente(pedido.getCliente().getNome())
                 .total(pedido.getTotal())
-                .status(pedido.getStatus().name())
+                .status(pedido.getStatus())
                 .items(converter(pedido.getItens()))
                 .build();
     }
@@ -78,13 +94,29 @@ public class PedidoController {
         ).collect(Collectors.toList());
     }
 
-     @PatchMapping("{id}")
+    @PatchMapping("{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateStatus(@PathVariable Integer id ,
-                             @RequestBody AtualizacaoStatusPedidoDTO dto){
+    public void updateStatus(@PathVariable Integer id, @RequestBody AtualizacaoStatusPedidoDTO dto){
         String novoStatus = dto.getNovoStatus();
         service.atualizaStatus(id, StatusPedido.valueOf(novoStatus));
     }
 
+
+    // @DeleteMapping("{id}")
+    // @ResponseStatus(HttpStatus.NO_CONTENT)
+    // public void delete(@PathVariable Integer id) {
+    //     pedidoRepository.findById(id)
+    //         .map(pedido -> {
+    //             pedidoRepository.delete(pedido);
+    //         return Void.TYPE;
+    //     })
+    //     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido não encontrado"));
+    // }
+
     
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        itemPedidoService.deletarPedido(id);
+    }   
 }
